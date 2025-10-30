@@ -12,15 +12,23 @@ export default function AdminPanel() {
   const [assignTaskId, setAssignTaskId] = useState('')
 
   const fetchUsers = async () => {
-    const res = await fetch(`${apiBase}/users`)
-    const data = await res.json()
-    setUsers(data)
+    try {
+      const res = await fetch(`${apiBase}/users`)
+      const data = await res.json()
+      setUsers(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   const fetchTasks = async () => {
-    const res = await fetch(`${apiBase}/tasks`)
-    const data = await res.json()
-    setTasks(data)
+    try {
+      const res = await fetch(`${apiBase}/tasks`)
+      const data = await res.json()
+      setTasks(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   useEffect(() => {
@@ -38,6 +46,7 @@ export default function AdminPanel() {
       if (!res.ok) throw new Error('Failed to create user')
       setNewUser({ name: '', email: '', role: 'annotator' })
       await fetchUsers()
+      alert('User created')
     } catch (e) {
       alert(e.message)
     } finally {
@@ -55,6 +64,7 @@ export default function AdminPanel() {
       if (!res.ok) throw new Error('Failed to create task')
       setNewTask({ title: '', description: '', instructions: '', priority: 'normal' })
       await fetchTasks()
+      alert('Task created')
     } catch (e) {
       alert(e.message)
     } finally {
@@ -71,7 +81,7 @@ export default function AdminPanel() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data?.detail || 'Failed to auto-assign')
-      alert(`Assigned to ${data.assigned} user(s)`) // light feedback
+      alert(`Assigned to ${data.assigned} user(s)`)
     } catch (e) {
       alert(e.message)
     } finally {
@@ -87,13 +97,13 @@ export default function AdminPanel() {
         <div className="bg-white border rounded-xl p-6">
           <h3 className="text-lg font-semibold">Create User</h3>
           <form onSubmit={createUser} className="mt-4 grid grid-cols-1 gap-3">
-            <input className="input" placeholder="Name" value={newUser.name} onChange={e=>setNewUser(v=>({...v,name:e.target.value}))} />
-            <input className="input" placeholder="Email" value={newUser.email} onChange={e=>setNewUser(v=>({...v,email:e.target.value}))} />
-            <select className="input" value={newUser.role} onChange={e=>setNewUser(v=>({...v,role:e.target.value}))}>
+            <input className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10" placeholder="Name" value={newUser.name} onChange={e=>setNewUser(v=>({...v,name:e.target.value}))} />
+            <input className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10" placeholder="Email" value={newUser.email} onChange={e=>setNewUser(v=>({...v,email:e.target.value}))} />
+            <select className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10" value={newUser.role} onChange={e=>setNewUser(v=>({...v,role:e.target.value}))}>
               <option value="annotator">Annotator</option>
               <option value="admin">Admin</option>
             </select>
-            <button disabled={loading} className="btn-primary">{loading? 'Saving...' : 'Add user'}</button>
+            <button disabled={loading} className="inline-flex items-center justify-center rounded-md bg-black text-white px-4 py-2 text-sm hover:bg-gray-900 disabled:opacity-60 transition">{loading? 'Saving...' : 'Add user'}</button>
           </form>
           <div className="mt-6">
             <h4 className="font-medium mb-2">Active Users</h4>
@@ -108,15 +118,15 @@ export default function AdminPanel() {
         <div className="bg-white border rounded-xl p-6">
           <h3 className="text-lg font-semibold">Create Task</h3>
           <form onSubmit={createTask} className="mt-4 grid grid-cols-1 gap-3">
-            <input className="input" placeholder="Title" value={newTask.title} onChange={e=>setNewTask(v=>({...v,title:e.target.value}))} />
-            <textarea className="input min-h-[88px]" placeholder="Description" value={newTask.description} onChange={e=>setNewTask(v=>({...v,description:e.target.value}))} />
-            <textarea className="input min-h-[88px]" placeholder="Instructions" value={newTask.instructions} onChange={e=>setNewTask(v=>({...v,instructions:e.target.value}))} />
-            <select className="input" value={newTask.priority} onChange={e=>setNewTask(v=>({...v,priority:e.target.value}))}>
+            <input className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10" placeholder="Title" value={newTask.title} onChange={e=>setNewTask(v=>({...v,title:e.target.value}))} />
+            <textarea className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 min-h-[88px]" placeholder="Description" value={newTask.description} onChange={e=>setNewTask(v=>({...v,description:e.target.value}))} />
+            <textarea className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 min-h-[88px]" placeholder="Instructions" value={newTask.instructions} onChange={e=>setNewTask(v=>({...v,instructions:e.target.value}))} />
+            <select className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10" value={newTask.priority} onChange={e=>setNewTask(v=>({...v,priority:e.target.value}))}>
               <option value="low">Low</option>
               <option value="normal">Normal</option>
               <option value="high">High</option>
             </select>
-            <button disabled={loading} className="btn-primary">{loading? 'Saving...' : 'Create task'}</button>
+            <button disabled={loading} className="inline-flex items-center justify-center rounded-md bg-black text-white px-4 py-2 text-sm hover:bg-gray-900 disabled:opacity-60 transition">{loading? 'Saving...' : 'Create task'}</button>
           </form>
           <div className="mt-6">
             <h4 className="font-medium mb-2">All Tasks</h4>
@@ -137,18 +147,13 @@ export default function AdminPanel() {
       <div className="mt-8 bg-white border rounded-xl p-6">
         <h3 className="text-lg font-semibold">Auto-assign Task to Users</h3>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
-          <select className="input" value={assignTaskId} onChange={e=>setAssignTaskId(e.target.value)}>
+          <select className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10" value={assignTaskId} onChange={e=>setAssignTaskId(e.target.value)}>
             <option value="">Select a task</option>
             {tasks.map(t => <option key={t._id} value={t._id}>{t.title}</option>)}
           </select>
-          <button onClick={autoAssign} disabled={loading || !assignTaskId} className="btn-primary">{loading? 'Assigning...' : 'Assign to all active users'}</button>
+          <button onClick={autoAssign} disabled={loading || !assignTaskId} className="inline-flex items-center justify-center rounded-md bg-black text-white px-4 py-2 text-sm hover:bg-gray-900 disabled:opacity-60 transition">{loading? 'Assigning...' : 'Assign to all active users'}</button>
         </div>
       </div>
-
-      <style>{`
-        .input{ @apply w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 } 
-        .btn-primary{ @apply inline-flex items-center justify-center rounded-md bg-black text-white px-4 py-2 text-sm hover:bg-gray-900 disabled:opacity-60 transition; }
-      `}</style>
     </section>
   )
 }

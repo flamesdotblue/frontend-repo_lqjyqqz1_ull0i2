@@ -9,12 +9,22 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(false)
 
   const fetchUsers = async () => {
-    const r = await fetch(`${apiBase}/users?active=true`)
-    setUsers(await r.json())
+    try {
+      const r = await fetch(`${apiBase}/users?active=true`)
+      const data = await r.json()
+      setUsers(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error(e)
+    }
   }
   const fetchAssignments = async (email) => {
-    const r = await fetch(`${apiBase}/assignments?user_email=${encodeURIComponent(email)}`)
-    setAssignments(await r.json())
+    try {
+      const r = await fetch(`${apiBase}/assignments?user_email=${encodeURIComponent(email)}`)
+      const data = await r.json()
+      setAssignments(Array.isArray(data) ? data : [])
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   useEffect(() => { fetchUsers() }, [])
@@ -39,7 +49,7 @@ export default function UserDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
             <label className="text-sm text-gray-600">Select User</label>
-            <select className="input mt-1" value={selected} onChange={e=>setSelected(e.target.value)}>
+            <select className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 mt-1" value={selected} onChange={e=>setSelected(e.target.value)}>
               <option value="">Choose an active user</option>
               {users.map(u => <option key={u._id} value={u.email}>{u.name} • {u.email}</option>)}
             </select>
@@ -64,7 +74,7 @@ export default function UserDashboard() {
                       <p className="font-medium text-sm">Task ID: {a.task_id}</p>
                       <p className="text-xs text-gray-500">Status: {a.status}</p>
                     </div>
-                    <button disabled={loading || a.status==='completed'} onClick={()=>markComplete(a._id)} className="btn-primary">
+                    <button disabled={loading || a.status==='completed'} onClick={()=>markComplete(a._id)} className="inline-flex items-center justify-center rounded-md bg-black text-white px-4 py-2 text-sm hover:bg-gray-900 disabled:opacity-60 transition">
                       {a.status==='completed' ? 'Completed' : 'Mark complete'}
                     </button>
                   </li>
@@ -74,11 +84,6 @@ export default function UserDashboard() {
           </div>
         )}
       </div>
-
-      <style>{`
-        .input{ @apply w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 } 
-        .btn-primary{ @apply inline-flex items-center justify-center rounded-md bg-black text-white px-4 py-2 text-sm hover:bg-gray-900 disabled:opacity-60 transition; }
-      `}</style>
     </section>
   )
 }
