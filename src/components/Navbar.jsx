@@ -24,8 +24,8 @@ export default function Navbar({ onNavigate, current }) {
         </div>
         <nav className="flex items-center gap-2">
           {link('home', 'Home')}
-          {link('admin', <span className="inline-flex items-center gap-1"><Settings size={16}/> Admin</span>)}
-          {link('user', <span className="inline-flex items-center gap-1"><User size={16}/> User</span>)}
+          {link('admin', <span className="inline-flex items-center gap-1" key="admin"><Settings size={16}/> Admin</span>)}
+          {link('user', <span className="inline-flex items-center gap-1" key="user"><User size={16}/> User</span>)}
         </nav>
       </div>
     </header>

@@ -6,28 +6,35 @@ export default function AdminPanel() {
   const [users, setUsers] = useState([])
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'annotator' })
   const [newTask, setNewTask] = useState({ title: '', description: '', instructions: '', priority: 'normal' })
   const [assignTaskId, setAssignTaskId] = useState('')
 
+  const safeJson = async (res) => {
+    try { return await res.json() } catch { return null }
+  }
+
   const fetchUsers = async () => {
     try {
+      setError('')
       const res = await fetch(`${apiBase}/users`)
-      const data = await res.json()
+      const data = await safeJson(res)
       setUsers(Array.isArray(data) ? data : [])
     } catch (e) {
-      console.error(e)
+      console.error(e); setError('Could not load users')
     }
   }
 
   const fetchTasks = async () => {
     try {
+      setError('')
       const res = await fetch(`${apiBase}/tasks`)
-      const data = await res.json()
+      const data = await safeJson(res)
       setTasks(Array.isArray(data) ? data : [])
     } catch (e) {
-      console.error(e)
+      console.error(e); setError('Could not load tasks')
     }
   }
 
@@ -39,6 +46,7 @@ export default function AdminPanel() {
   const createUser = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
     try {
       const res = await fetch(`${apiBase}/users`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newUser)
@@ -48,7 +56,7 @@ export default function AdminPanel() {
       await fetchUsers()
       alert('User created')
     } catch (e) {
-      alert(e.message)
+      setError(e.message)
     } finally {
       setLoading(false)
     }
@@ -57,6 +65,7 @@ export default function AdminPanel() {
   const createTask = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
     try {
       const res = await fetch(`${apiBase}/admin/tasks`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newTask)
@@ -66,7 +75,7 @@ export default function AdminPanel() {
       await fetchTasks()
       alert('Task created')
     } catch (e) {
-      alert(e.message)
+      setError(e.message)
     } finally {
       setLoading(false)
     }
@@ -75,15 +84,16 @@ export default function AdminPanel() {
   const autoAssign = async () => {
     if (!assignTaskId) return alert('Select a task to assign')
     setLoading(true)
+    setError('')
     try {
       const res = await fetch(`${apiBase}/admin/assignments/auto`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ task_id: assignTaskId })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data?.detail || 'Failed to auto-assign')
-      alert(`Assigned to ${data.assigned} user(s)`)
+      const data = await safeJson(res)
+      if (!res.ok) throw new Error((data && (data.detail || data.message)) || 'Failed to auto-assign')
+      alert(`Assigned to ${data.assigned} user(s)`) 
     } catch (e) {
-      alert(e.message)
+      setError(e.message)
     } finally {
       setLoading(false)
     }
@@ -93,6 +103,9 @@ export default function AdminPanel() {
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-10">
+      {error && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="bg-white border rounded-xl p-6">
           <h3 className="text-lg font-semibold">Create User</h3>
@@ -109,7 +122,7 @@ export default function AdminPanel() {
             <h4 className="font-medium mb-2">Active Users</h4>
             <div className="flex flex-wrap gap-2">
               {activeUsers.map(u => (
-                <span key={u._id} className="px-2 py-1 rounded bg-gray-100 text-sm">{u.name}</span>
+                <span key={u._id || u.email} className="px-2 py-1 rounded bg-gray-100 text-sm">{u.name}</span>
               ))}
             </div>
           </div>
@@ -132,7 +145,7 @@ export default function AdminPanel() {
             <h4 className="font-medium mb-2">All Tasks</h4>
             <ul className="space-y-2 max-h-48 overflow-auto pr-1">
               {tasks.map(t => (
-                <li key={t._id} className="flex items-center justify-between p-2 rounded border">
+                <li key={t._id || t.title} className="flex items-center justify-between p-2 rounded border">
                   <div>
                     <p className="font-medium text-sm">{t.title} <span className="text-xs text-gray-500">• {t.priority}</span></p>
                     {t.description && (<p className="text-xs text-gray-500 line-clamp-1">{t.description}</p>)}
@@ -149,7 +162,7 @@ export default function AdminPanel() {
         <div className="mt-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
           <select className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10" value={assignTaskId} onChange={e=>setAssignTaskId(e.target.value)}>
             <option value="">Select a task</option>
-            {tasks.map(t => <option key={t._id} value={t._id}>{t.title}</option>)}
+            {tasks.map(t => <option key={(t._id || t.title) + '-opt'} value={t._id}>{t.title}</option>)}
           </select>
           <button onClick={autoAssign} disabled={loading || !assignTaskId} className="inline-flex items-center justify-center rounded-md bg-black text-white px-4 py-2 text-sm hover:bg-gray-900 disabled:opacity-60 transition">{loading? 'Assigning...' : 'Assign to all active users'}</button>
         </div>

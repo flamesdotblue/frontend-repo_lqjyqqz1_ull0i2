@@ -7,23 +7,28 @@ export default function UserDashboard() {
   const [selected, setSelected] = useState('')
   const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const safeJson = async (res) => { try { return await res.json() } catch { return null } }
 
   const fetchUsers = async () => {
     try {
+      setError('')
       const r = await fetch(`${apiBase}/users?active=true`)
-      const data = await r.json()
+      const data = await safeJson(r)
       setUsers(Array.isArray(data) ? data : [])
     } catch (e) {
-      console.error(e)
+      console.error(e); setError('Could not load users')
     }
   }
   const fetchAssignments = async (email) => {
     try {
+      setError('')
       const r = await fetch(`${apiBase}/assignments?user_email=${encodeURIComponent(email)}`)
-      const data = await r.json()
+      const data = await safeJson(r)
       setAssignments(Array.isArray(data) ? data : [])
     } catch (e) {
-      console.error(e)
+      console.error(e); setError('Could not load assignments')
     }
   }
 
@@ -34,24 +39,28 @@ export default function UserDashboard() {
 
   const markComplete = async (id) => {
     setLoading(true)
+    setError('')
     try {
       const r = await fetch(`${apiBase}/assignments/${id}/complete`, { method: 'POST' })
       if (!r.ok) throw new Error('Failed to complete')
       await fetchAssignments(selected)
     } catch(e){
-      alert(e.message)
+      setError(e.message)
     } finally{ setLoading(false) }
   }
 
   return (
     <section className="max-w-6xl mx-auto px-6 py-10">
+      {error && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{error}</div>
+      )}
       <div className="bg-white border rounded-xl p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
             <label className="text-sm text-gray-600">Select User</label>
             <select className="w-full rounded-md border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 mt-1" value={selected} onChange={e=>setSelected(e.target.value)}>
               <option value="">Choose an active user</option>
-              {users.map(u => <option key={u._id} value={u.email}>{u.name} • {u.email}</option>)}
+              {users.map(u => <option key={u._id || u.email} value={u.email}>{u.name} • {u.email}</option>)}
             </select>
           </div>
           {selectedUser && (
@@ -69,7 +78,7 @@ export default function UserDashboard() {
             ) : (
               <ul className="space-y-2">
                 {assignments.map(a => (
-                  <li key={a._id} className="flex items-center justify-between p-3 border rounded-md">
+                  <li key={a._id || a.task_id} className="flex items-center justify-between p-3 border rounded-md">
                     <div>
                       <p className="font-medium text-sm">Task ID: {a.task_id}</p>
                       <p className="text-xs text-gray-500">Status: {a.status}</p>
