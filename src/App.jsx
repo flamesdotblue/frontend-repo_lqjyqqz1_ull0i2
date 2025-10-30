@@ -1,26 +1,42 @@
 import { useState } from 'react'
+import Navbar from './components/Navbar'
+import Hero from './components/Hero'
+import AdminPanel from './components/AdminPanel'
+import UserDashboard from './components/UserDashboard'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [page, setPage] = useState('home')
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Vibe Coding Platform
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Your AI-powered development environment
-        </p>
-        <div className="text-center">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-          >
-            Count is {count}
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-white text-gray-900">
+      <Navbar onNavigate={setPage} current={page} />
+
+      {page === 'home' && (
+        <>
+          <Hero />
+          <section className="max-w-6xl mx-auto px-6 py-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[ 
+                { title: 'Admin automation', desc: 'Create one task and auto assign to your entire team.'},
+                { title: 'User-centric', desc: 'A clean inbox of assignments for every user.'},
+                { title: 'API-first', desc: 'Backed by a FastAPI service ready to scale.'}
+              ].map(card => (
+                <div key={card.title} className="rounded-xl border p-6 bg-white hover:shadow-sm transition">
+                  <h3 className="font-semibold">{card.title}</h3>
+                  <p className="text-sm text-gray-600 mt-2">{card.desc}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
+
+      {page === 'admin' && <AdminPanel />}
+      {page === 'user' && <UserDashboard />}
+
+      <footer className="mt-16 py-10 border-t">
+        <div className="max-w-6xl mx-auto px-6 text-sm text-gray-500">Built with React, Tailwind, and FastAPI.</div>
+      </footer>
     </div>
   )
 }
